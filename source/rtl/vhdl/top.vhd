@@ -168,8 +168,8 @@ begin
   graphics_lenght <= conv_std_logic_vector(MEM_SIZE*8*8, GRAPH_MEM_ADDR_WIDTH);
   
   -- removed to inputs pin
-  direct_mode <= '1';
-  display_mode     <= "10";  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
+  direct_mode <= '0';
+  display_mode     <= "01";  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
   
   font_size        <= x"1";
   show_frame       <= '1';
@@ -246,10 +246,72 @@ begin
     blue_o             => blue_o     
   );
   
-  -- na osnovu signala iz vga_top modula dir_pixel_column i dir_pixel_row realizovati logiku koja genereise
+    -- na osnovu signala iz vga_top modula dir_pixel_column i dir_pixel_row realizovati logiku koja genereise
   --dir_red
   --dir_green
   --dir_blue
+  process (dir_pixel_column) begin
+		if (dir_pixel_column >=0 and dir_pixel_column < 80) then
+				dir_red <= "11111111"; 
+				dir_green <= "11111111";
+				dir_blue <= "11111111";
+		elsif (dir_pixel_column >=80 and dir_pixel_column < 160) then
+				dir_red <= "11111111"; 
+				dir_green <= "11111111";
+				dir_blue <= "00000000";
+		elsif (dir_pixel_column >=160 and dir_pixel_column < 240) then
+				dir_red <= x"87"; 
+				dir_green <= x"cc";
+				dir_blue <= x"eb";
+		elsif (dir_pixel_column >=240 and dir_pixel_column < 320) then
+				dir_red <= "00000000"; 
+				dir_green <= "11111111";
+				dir_blue <= "00000000";
+				
+		elsif (dir_pixel_column >=320 and dir_pixel_column < 400) then
+				dir_red <= x"da"; 
+				dir_green <= x"70";
+				dir_blue <= x"d6";
+		elsif (dir_pixel_column >=400 and dir_pixel_column < 480) then
+				dir_red <= "11111111"; 
+				dir_green <= "00000000";
+				dir_blue <= "00000000";
+		elsif (dir_pixel_column >=480 and dir_pixel_column < 560) then
+				dir_red <= "00000000";
+				dir_green <= "00000000";
+				dir_blue <= "11111111";
+		else 
+				dir_red <= "00000000"; 
+				dir_green <= "00000000";
+				dir_blue <= "00000000";
+		end if;
+end process;
+
+char_we <= '1';--dozvola upisa
+proces (clk_i,reset_n_i) begin--treba proveriti za koji clock treba raditi petlju
+	if (reset_n_i = '1') then
+		char_address <= "00000000000000";
+	elsif (clk_i'event and clk_i = '1') then
+		char_address <= char_address +1;
+	end if;
+end process;
+
+
+process (char_address) begin
+	if(char_address<= "00000000001001") then
+		char_value <= "000001";
+	
+	elsif(char_address<= "00000000001010") then
+		char_value <= "000001";
+	else 
+		char_value <= "010100";
+	end if;
+end process;
+	
+--	char_address<= "00000000001001";
+--char_value <= "000001" when char_address<= "00000000001001" ;
+		
+
  
   -- koristeci signale realizovati logiku koja pise po TXT_MEM
   --char_address
