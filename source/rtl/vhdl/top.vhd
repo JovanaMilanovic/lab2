@@ -156,6 +156,10 @@ architecture rtl of top is
   signal dir_blue            : std_logic_vector(7 downto 0);
   signal dir_pixel_column    : std_logic_vector(10 downto 0);
   signal dir_pixel_row       : std_logic_vector(10 downto 0);
+  
+  signal sec_c					: std_logic_vector(24 downto 0);
+  signal offset					: std_logic_vector (13 downto 0);
+  signal sCT						:std_logic;
 
 begin
 
@@ -169,7 +173,7 @@ begin
   
   -- removed to inputs pin
   direct_mode <= '0';
-  display_mode     <= "01";  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
+  display_mode     <= "10";  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
   
   font_size        <= x"1";
   show_frame       <= '1';
@@ -286,42 +290,75 @@ begin
 				dir_blue <= "00000000";
 		end if;
 end process;
+--drugi i treci zadatak
 
-char_we <= '1';--dozvola upisa
-proces (clk_i,reset_n_i) begin--treba proveriti za koji clock treba raditi petlju
-	if (reset_n_i = '1') then
+char_we <= '1';
+process (pix_clock_s,reset_n_i) begin
+	if (reset_n_i = '0') then
 		char_address <= "00000000000000";
-	elsif (clk_i'event and clk_i = '1') then
-		char_address <= char_address +1;
+	elsif (rising_edge(pix_clock_s)) then
+		char_address <= char_address + 1;
+		if (char_address = 1199) then
+			char_address <= "00000000000000";
+		end if;			
 	end if;
 end process;
 
 
-process (char_address) begin
-	if(char_address<= "00000000001001") then
-		char_value <= "000001";
-	
-	elsif(char_address<= "00000000001010") then
-		char_value <= "000001";
-	else 
-		char_value <= "010100";
-	end if;
-end process;
-	
---	char_address<= "00000000001001";
---char_value <= "000001" when char_address<= "00000000001001" ;
+
+
 		
+char_value <=  "000001" when char_address = ("00000000001001" + offset) else
+					"001110" when char_address = ("00000000001010" + offset) else
+					"000100" when char_address = ("00000000001011" + offset) else
+					"010010" when char_address = ("00000000001100" + offset) else
+					"000101" when char_address = ("00000000001101" + offset) else
+					"001010" when char_address = ("00000000001110" + offset) else
+					"100000";
+					
+process (pix_clock_s ,reset_n_i) begin
+	if (reset_n_i  = '0') then
+		sec_c <= "0000000000000000000000000";
+		offset <= "00000000000000";
+	elsif (rising_edge(pix_clock_s)) then
+		sec_c <= sec_c + 1;
+		offset <= offset;
+		if (sec_c = 24999999) then
+			sec_c <= "0000000000000000000000000";
+			offset <= offset+1;
+			if(("00000000001001" + offset) = 1199) then
+				offset <= "00000000000000";
+			end if;
+		end if;			
+	end if;
+end process;	
 
- 
-  -- koristeci signale realizovati logiku koja pise po TXT_MEM
-  --char_address
-  --char_value
-  --char_we
+
+
   
   -- koristeci signale realizovati logiku koja pise po GRAPH_MEM
   --pixel_address
   --pixel_value
   --pixel_we
+  
+  char_we <= '1';
+ 
+ process (pix_clock_s ,reset_n_i) begin
+		if (reset_n_i  = '0') then
+			pixel_address <= "00000000000000000000";
+		elsif (rising_edge(pix_clock_s)) then
+			pixel_address <= pixel_address +1;
+			if (pixel_address = 9599) then
+				pixel_address <= "00000000000000000000";
+			end if;
+		end if;
+end process;
+
+pixel_value <=  "11111111111111111111111111111111" when pixel_address = 21 else
+					"11111111111111111111111111111111" when pixel_address = 41 else
+					"11111111111111111111111111111111" when pixel_address = 61 else
+					"00000000000000000000000000000000";
+		
   
   
 end rtl;
