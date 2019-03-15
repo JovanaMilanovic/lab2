@@ -19,10 +19,14 @@ entity top is
     RES_TYPE             : natural := 1;
     TEXT_MEM_DATA_WIDTH  : natural := 6;
     GRAPH_MEM_DATA_WIDTH : natural := 32
+	 
     );
   port (
     clk_i          : in  std_logic;
     reset_n_i      : in  std_logic;
+	 direct_mode_i : in std_logic;
+	 display_mode_i : in std_logic_vector(1 downto 0);
+	 
     -- vga
     vga_hsync_o    : out std_logic;
     vga_vsync_o    : out std_logic;
@@ -160,6 +164,8 @@ architecture rtl of top is
   signal sec_c					: std_logic_vector(24 downto 0);
   signal offset					: std_logic_vector (13 downto 0);
   signal sCT						:std_logic;
+  signal offset1					: std_logic_vector (19 downto 0);
+    signal sec_c1					: std_logic_vector(24 downto 0);
 
 begin
 
@@ -173,7 +179,7 @@ begin
   
   -- removed to inputs pin
   direct_mode <= '0';
-  display_mode     <= "10";  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
+  display_mode     <= "01";  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
   
   font_size        <= x"1";
   show_frame       <= '1';
@@ -215,14 +221,14 @@ begin
     clk_i              => clk_i,
     reset_n_i          => reset_n_i,
     --
-    direct_mode_i      => direct_mode,
+    direct_mode_i      => direct_mode_i,
     dir_red_i          => dir_red,
     dir_green_i        => dir_green,
     dir_blue_i         => dir_blue,
     dir_pixel_column_o => dir_pixel_column,
     dir_pixel_row_o    => dir_pixel_row,
     -- cfg
-    display_mode_i     => display_mode,  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
+    display_mode_i     => display_mode_i,  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
     -- text mode interface
     text_addr_i        => char_address,
     text_data_i        => char_value,
@@ -254,7 +260,8 @@ begin
   --dir_red
   --dir_green
   --dir_blue
-  process (dir_pixel_column) begin
+  process (dir_pixel_column, direct_mode_i, display_mode_i) begin
+  
 		if (dir_pixel_column >=0 and dir_pixel_column < 80) then
 				dir_red <= "11111111"; 
 				dir_green <= "11111111";
@@ -289,6 +296,8 @@ begin
 				dir_green <= "00000000";
 				dir_blue <= "00000000";
 		end if;
+	
+		
 end process;
 --drugi i treci zadatak
 
@@ -334,6 +343,9 @@ process (pix_clock_s ,reset_n_i) begin
 end process;	
 
 
+  char_we <= '1';
+  
+ pixel_we <= '1';
 
   
   -- koristeci signale realizovati logiku koja pise po GRAPH_MEM
@@ -341,7 +353,6 @@ end process;
   --pixel_value
   --pixel_we
   
-  char_we <= '1';
  
  process (pix_clock_s ,reset_n_i) begin
 		if (reset_n_i  = '0') then
@@ -354,10 +365,146 @@ end process;
 		end if;
 end process;
 
-pixel_value <=  "11111111111111111111111111111111" when pixel_address = 21 else
-					"11111111111111111111111111111111" when pixel_address = 41 else
-					"11111111111111111111111111111111" when pixel_address = 61 else
-					"00000000000000000000000000000000";
+--pixel_value <= x"FFFFFFFF" when pixel_address = 128 else --prva vertikalna linija
+--					x"FFFFFFFF" when pixel_address = 148 else
+--					x"FFFFFFFF" when pixel_address = 168 else
+--					x"FFFFFFFF" when pixel_address = 188 else
+--					x"FFFFFFFF" when pixel_address = 208 else
+--					x"FFFFFFFF" when pixel_address = 228 else
+--					x"FFFFFFFF" when pixel_address = 248 else
+--					x"FFFFFFFF" when pixel_address = 268 else
+--					x"FFFFFFFF" when pixel_address = 288 else
+--					x"FFFFFFFF" when pixel_address = 308 else
+--					x"FFFFFFFF" when pixel_address = 328 else
+--					x"FFFFFFFF" when pixel_address = 348 else
+--					x"FFFFFFFF" when pixel_address = 368 else
+--					x"FFFFFFFF" when pixel_address = 388 else
+--					x"FFFFFFFF" when pixel_address = 408 else
+--					x"FFFFFFFF" when pixel_address = 428 else
+--					x"FFFFFFFF" when pixel_address = 448 else
+--					x"FFFFFFFF" when pixel_address = 468 else
+--					x"FFFFFFFF" when pixel_address = 488 else
+--					x"FFFFFFFF" when pixel_address = 508 else
+--					x"FFFFFFFF" when pixel_address = 528 else
+--					x"FFFFFFFF" when pixel_address = 548 else
+--					x"FFFFFFFF" when pixel_address = 568 else
+--					x"FFFFFFFF" when pixel_address = 588 else
+--					x"FFFFFFFF" when pixel_address = 608 else
+--					x"FFFFFFFF" when pixel_address = 628 else
+--					x"FFFFFFFF" when pixel_address = 648 else
+--					x"FFFFFFFF" when pixel_address = 668 else
+--					x"FFFFFFFF" when pixel_address = 688 else
+--					x"FFFFFFFF" when pixel_address = 708 else
+--					x"FFFFFFFF" when pixel_address = 728 else
+--					x"FFFFFFFF" when pixel_address = 748 else
+--					x"00000000";
+
+
+--pixel_value <= x"FFFFFFFF" when pixel_address = 120 + offset1 else --prva vertikalna linija
+--					x"FFFFFFFF" when pixel_address = 140 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 160 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 180 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 200 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 220 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 240 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 260 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 280 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 300 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 320 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 340 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 360 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 380 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 400 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 420 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 440 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 460 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 480 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 500 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 520 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 540 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 560 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 580 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 600 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 620 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 640 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 660 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 680 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 700 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 720 + offset1 else
+--					x"FFFFFFFF" when pixel_address = 740 + offset1 else
+--					x"00000000";
+--					
+--process (pix_clock_s ,reset_n_i) begin
+--	if (reset_n_i  = '0') then
+--		sec_c <= "0000000000000000000000000";
+--		offset1 <= "00000000000000000000";
+--	elsif (rising_edge(pix_clock_s)) then
+--		sec_c <= sec_c + 1;
+--		offset1 <= offset1;
+--		if (sec_c = 24999999) then
+--			sec_c <= "0000000000000000000000000";
+--			offset1 <= offset1+1;
+--			if(offset1 = 20) then
+--				offset1 <= "00000000000000000000";
+--			end if;
+--		end if;			
+--	end if;
+--end process;		
+
+
+pixel_value <= x"FFFFFFFF" when pixel_address = 120 + offset1 else 
+					x"FFFFFFFF" when pixel_address = 140 + offset1 else
+					x"FFFFFFFF" when pixel_address = 160 + offset1 else
+					x"FFFFFFFF" when pixel_address = 180 + offset1 else
+					x"FFFFFFFF" when pixel_address = 200 + offset1 else
+					x"FFFFFFFF" when pixel_address = 220 + offset1 else
+					x"FFFFFFFF" when pixel_address = 240 + offset1 else
+					x"FFFFFFFF" when pixel_address = 260 + offset1 else
+					x"FFFFFFFF" when pixel_address = 280 + offset1 else
+					x"FFFFFFFF" when pixel_address = 300 + offset1 else
+					x"FFFFFFFF" when pixel_address = 320 + offset1 else
+					x"FFFFFFFF" when pixel_address = 340 + offset1 else
+					x"FFFFFFFF" when pixel_address = 360 + offset1 else
+					x"FFFFFFFF" when pixel_address = 380 + offset1 else
+					x"FFFFFFFF" when pixel_address = 400 + offset1 else
+					x"FFFFFFFF" when pixel_address = 420 + offset1 else
+					x"FFFFFFFF" when pixel_address = 440 + offset1 else
+					x"FFFFFFFF" when pixel_address = 460 + offset1 else
+					x"FFFFFFFF" when pixel_address = 480 + offset1 else
+					x"FFFFFFFF" when pixel_address = 500 + offset1 else
+					x"FFFFFFFF" when pixel_address = 520 + offset1 else
+					x"FFFFFFFF" when pixel_address = 540 + offset1 else
+					x"FFFFFFFF" when pixel_address = 560 + offset1 else
+					x"FFFFFFFF" when pixel_address = 580 + offset1 else
+					x"FFFFFFFF" when pixel_address = 600 + offset1 else
+					x"FFFFFFFF" when pixel_address = 620 + offset1 else
+					x"FFFFFFFF" when pixel_address = 640 + offset1 else
+					x"FFFFFFFF" when pixel_address = 660 + offset1 else
+					x"FFFFFFFF" when pixel_address = 680 + offset1 else
+					x"FFFFFFFF" when pixel_address = 700 + offset1 else
+					x"FFFFFFFF" when pixel_address = 720 + offset1 else
+					x"FFFFFFFF" when pixel_address = 740 + offset1 else
+					x"00000000";
+					
+process (pix_clock_s ,reset_n_i) begin
+	if (reset_n_i  = '0') then
+		sec_c1 <= "0000000000000000000000000";
+		offset1 <= "00000000000000000000";
+	elsif (rising_edge(pix_clock_s)) then
+		sec_c1 <= sec_c1 + 1;
+		offset1 <= offset1;
+		if (sec_c1 = 5000000) then
+			sec_c1 <= "0000000000000000000000000";
+			offset1 <= offset1+1;
+			if(offset1 = 9599) then
+				offset1 <= "00000000000000000000";
+			end if;
+		end if;			
+	end if;
+end process;		
+					
+					
+					
 		
   
   
